@@ -1,0 +1,27 @@
+# 构建产物
+build/
+bin/
+cmake-build-*/
+
+# CMake 生成文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# 编译中间文件
+*.o
+*.d
+*.a
+*.so
+*.out
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.swp
+
+# 运行时日志与数据
+*.log
+log/
