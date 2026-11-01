@@ -1,5 +1,6 @@
 #include "chatserver.hpp"
 #include"chatservice.hpp"
+#include "CommonConnectionPool.h"
 #include<iostream>
 #include<signal.h>
 
@@ -23,6 +24,9 @@ int main(int argc, char **argv)
     //解析通过命令行参数传递的ip和port
     char *ip = argv[1];
     uint16_t port = atoi(argv[2]);
+
+    // 服务启动时初始化连接池，避免把建连时间算到第一次登录上
+    ConnectionPool::getConnectionPool();
 
     signal(SIGINT,resetHandler);
     

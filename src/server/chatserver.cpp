@@ -20,7 +20,7 @@ ChatServer::ChatServer(EventLoop *loop,
     // 注册消息回调
     _server.setMessageCallback(std::bind(&ChatServer::onMessage, this, _1, _2, _3));
     // 设置线程数量
-    _server.setThreadNum(4);
+    _server.setThreadNum(8);
 }
 
 // 启动服务
