@@ -1,6 +1,7 @@
 #include "chatservice.hpp"
 #include "public.hpp"
 #include "friendmodel.hpp"
+#include "net/frame_codec.hpp"
 #include <muduo/base/Logging.h>
 #include <string>
 #include <vector>
@@ -13,6 +14,12 @@ ChatService *ChatService::instance()
 {
     static ChatService service;
     return &service;
+}
+
+// 统一发送带长度前缀的帧
+void ChatService::sendJson(const TcpConnectionPtr &conn, const json &js)
+{
+    conn->send(frame::encode(js));
 }
 
 // 注册消息以及对应的Handler回调操作
@@ -53,7 +60,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time)
             response["msgid"] = LOGIN_MSG_ACK;
             response["errno"] = 2;
             response["errmsg"] = "this account is using,input another!";
-            conn->send(response.dump());
+            sendJson(conn, response);
         }
         else
         {
@@ -130,7 +137,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time)
                 response["groups"] = groupV;
             }
 
-            conn->send(response.dump());
+            sendJson(conn, response);
         }
     }
     else
@@ -140,7 +147,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time)
         response["msgid"] = LOGIN_MSG_ACK;
         response["errno"] = 1;
         response["errmsg"] = "id or password is invalid!";
-        conn->send(response.dump());
+        sendJson(conn, response);
     }
 }
 
@@ -163,7 +170,7 @@ void ChatService::reg(const TcpConnectionPtr &conn, json &js, Timestamp time)
         response["msgid"] = REG_MSG_ACK;
         response["errno"] = 0;
         response["id"] = user.getId();
-        conn->send(response.dump());
+        sendJson(conn, response);
     }
     else
     {
@@ -171,7 +178,7 @@ void ChatService::reg(const TcpConnectionPtr &conn, json &js, Timestamp time)
         json response;
         response["msgid"] = REG_MSG_ACK;
         response["errno"] = 1;
-        conn->send(response.dump());
+        sendJson(conn, response);
     }
 }
 
@@ -242,8 +249,11 @@ void ChatService::clientCloseException(const TcpConnectionPtr &conn)
         }
     }
 
-    //用户注销，相当于下线，在redis中取消订阅通道
-    _redis.unsubscribe(user.getId());
+    //用户注销，相当于下线，在redis中取消订阅通道（未登录连接没有订阅）
+    if (user.getId() != -1)
+    {
+        _redis.unsubscribe(user.getId());
+    }
 
     // 更新用户的状态信息
     if (user.getId() != -1)
@@ -266,7 +276,7 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time
         if (it != _userConnMap.end())
         {
             // toid在线,转发消息   服务器主动推送消息给toid用户
-            it->second->send(js.dump());
+            sendJson(it->second, js);
             return;
         }
     }
@@ -332,7 +342,7 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json &js, Timestamp ti
         if(it != _userConnMap.end())
         {
             //转发消息
-            it->second->send(js.dump());
+            sendJson(it->second, js);
         }
         else
         {
@@ -357,7 +367,7 @@ void ChatService::handleRedisSubscribeMessage(int userid,string msg)
     auto it = _userConnMap.find(userid);
     if(it != _userConnMap.end())
     {
-        it->second->send(msg);
+        it->second->send(frame::encode(msg));
         return;
     }
 

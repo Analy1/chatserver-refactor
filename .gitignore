@@ -25,3 +25,7 @@ compile_commands.json
 # 运行时日志与数据
 *.log
 log/
+
+# 本地文档与测试（不提交）
+docs/
+tests/

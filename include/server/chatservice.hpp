@@ -66,6 +66,9 @@ public:
 private:
     ChatService();
 
+    //统一按长度前缀帧发送 JSON
+    void sendJson(const TcpConnectionPtr &conn, const json &js);
+
     //存储消息id和其对应的业务处理方法
     unordered_map<int,MsgHandler> _msgHandlerMap;
 

@@ -18,3 +18,12 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 
 # 加载子目录
 add_subdirectory(src)
+
+# 单元测试（tests/ 为本地目录，未随仓库提供）
+if (EXISTS ${PROJECT_SOURCE_DIR}/tests/CMakeLists.txt)
+    option(BUILD_TESTS "Build unit tests" ON)
+    if (BUILD_TESTS)
+        enable_testing()
+        add_subdirectory(tests)
+    endif()
+endif()

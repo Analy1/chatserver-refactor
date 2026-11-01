@@ -4,6 +4,7 @@
 #include<hiredis/hiredis.h>
 #include<thread>
 #include<functional>
+#include<mutex>
 using namespace std;
 
 class Redis
@@ -38,6 +39,9 @@ private:
 
     //回调操作，收到订阅的消息，给service层上报
     function<void(int,string)> _notify_message_handler;
+
+    //hiredis 连接不是线程安全的，命令写入需要串行化
+    mutex _cmdMutex;
 };
 
 #endif
